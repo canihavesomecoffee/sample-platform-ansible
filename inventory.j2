@@ -1,0 +1,11 @@
+all:
+  hosts:
+    sample_platform_4:
+      ansible_host: "{{ target_host }}"
+      domain_name: "{{ domain_name }}"
+      use_lets_encrypt: {{ lets_encrypt }}
+      mysql_db_name: "{{ database_name }}"
+      mysql_db_user: "{{ database_user }}"
+      vm_name_linux: "CI_Linux"
+      vm_name_windows: "CI_Windows"
+

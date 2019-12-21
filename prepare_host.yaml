@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_prompt:
+    - name: target_host
+      prompt: Enter the IP of the server where the Sample Platform should be deployed to
+      private: no
+    - name: domain_name
+      prompt: Enter the domain name (e.g. sampleplatform.ccextractor.org) that will be used for hosting the Sample Platform (use IP or "localhost" if local install)
+      private: no
+    - name: lets_encrypt
+      prompt: Should Let's Encrypt be used to obtain a certificate? True (default) or False (e.g. if local install)
+      default: true
+      private: no
+    - name: database_name
+      prompt: How should the database be named?
+      default: sample_platform
+      private: no
+    - name: database_user
+      prompt: How should the database user be named?
+      default: sample_platform
+      private: no
+  tasks:
+    - name: Create the inventory file
+      template:
+        src: inventory.j2
+        dest: inventory.yaml
