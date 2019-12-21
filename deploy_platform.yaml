@@ -1,0 +1,85 @@
+---
+- hosts: sample_platform_4
+  remote_user: root
+  vars:
+    install_dir: /var/www/sample_platform
+    install_user: www-data
+    install_group: www-data
+    mysql_root_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/mysql/root length=15 chars=ascii_letters') }}"
+    mysql_db_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/mysql/app length=15 chars=ascii_letters') }}"
+  tasks:
+    - name: Install python 3
+      apt:
+        update_cache: yes
+        pkg:
+          - python3
+          - python3-pip
+          - python3-libvirt
+          - python3-pymysql
+    - name: Switch default python interpreter to py3
+      shell: update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1 && update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2 && update-alternatives --auto python
+    - name: Install dependencies
+      apt:
+        pkg:
+          - nginx
+          - qemu-kvm
+          - libvirt-clients
+          - libvirt-dev
+          - virt-manager
+          - mediainfo
+          - mariadb-server
+          - git
+    - name: Update pip, setuptools and wheel
+      pip:
+        name: pip,setuptools,wheel
+        extra_args: --upgrade
+    - name: Clone repository
+      git:
+        repo: https://github.com/CCExtractor/sample-platform.git
+        dest: "{{ install_dir }}"
+    - name: Make www-data owner of the folder
+      file:
+        path: "{{ install_dir }}"
+        owner: "{{ install_user }}"
+        group: "{{ install_group }}"
+        mode: '0644'
+    - name: Install pip dependencies
+      pip:
+        requirements: "{{ install_dir }}/requirements.txt"
+        state: forcereinstall
+    - name: Make sure the MySQL server is running at startup
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+    - name: Change password for MySQL root user
+      mysql_user:
+        login_user: root
+        login_password: "{{ mysql_root_pass }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        check_implicit_admin: yes
+        name: root
+        password: "{{ mysql_root_pass }}"
+        host: localhost
+        priv: "*.*:ALL,GRANT"
+    - name: Create .my.cnf MySQL config for root user
+      template:
+        src: .my.cnf.j2
+        dest: /root/.my.cnf
+        owner: root
+        group: root
+        mode: '0600'
+      vars:
+        password: "{{ mysql_root_pass }}"
+    - name: Create a new database with name '{{ mysql_db_name }}'
+      mysql_db:
+        name: "{{ mysql_db_name }}"
+        state: present
+    - name: 'Add a Sample Platform user ({{ mysql_db_user }}) for MySQL'
+      mysql_user:
+        login_user: root
+        login_password: "{{ mysql_root_pass }}"
+        name: "{{ mysql_db_user }}"
+        password: "{{ mysql_db_pass }}"
+        host: localhost
+        priv: "{{ mysql_db_name }}.*:ALL,GRANT"
