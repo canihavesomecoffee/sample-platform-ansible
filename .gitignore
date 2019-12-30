@@ -8,3 +8,6 @@ coverage_report/
 # IDE
 .vscode/
 .idea/
+
+# Actual configuration yaml
+inventory.yaml
