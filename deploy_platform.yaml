@@ -2,11 +2,16 @@
 - hosts: sample_platform_4
   remote_user: root
   vars:
-    install_dir: /var/www/sample_platform
     install_user: www-data
     install_group: www-data
+    data_log_dir: "{{ data_dir }}/LogFiles"
+    data_result_dir: "{{ data_dir }}/TestResults"
+    data_media_sample_dir: "{{ data_dir }}/TestFiles/media"
     mysql_root_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/mysql/root length=15 chars=ascii_letters') }}"
     mysql_db_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/mysql/app length=15 chars=ascii_letters') }}"
+    dh_param: /etc/ssl/dhparam.pem
+    ssl_key: /etc/ssl/private/sample_platform.key
+    ssl_cert: /etc/ssl/sample_platform.crt
   tasks:
     - name: Install python 3
       apt:
@@ -42,7 +47,7 @@
         path: "{{ install_dir }}"
         owner: "{{ install_user }}"
         group: "{{ install_group }}"
-        mode: '0644'
+        mode: 0644
     - name: Install pip dependencies
       pip:
         requirements: "{{ install_dir }}/requirements.txt"
@@ -83,3 +88,50 @@
         password: "{{ mysql_db_pass }}"
         host: localhost
         priv: "{{ mysql_db_name }}.*:ALL,GRANT"
+    - name: Create all directories for holding data
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ install_user }}"
+        group: "{{ install_group }}"
+        mode: 0755
+        loop:
+          - "{{ data_dir }}"
+          - "{{ data_dir }}/ci-tests"
+          - "{{ data_dir }}/unsafe-ccextractor"
+          - "{{ data_dir }}/TempFiles"
+          - "{{ data_log_dir }}"
+          - "{{ data_result_dir }}"
+          - "{{ data_dir }}/TestFiles"
+          - "{{ data_media_sample_dir }}"
+          - "{{ data_dir }}/QueuedFiles"
+    - name: Create Nginx config file
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/sample_platform
+      vars:
+        domain_name: "{{ domain_name }}"
+        ssl_cert: "{{ ssl_cert }}"
+        ssl_key: "{{ ssl_key }}"
+        dh_param: "{{ dh_param }}"
+        web_dir: "{{ install_dir }}"
+        sample_dir: "{{ data_media_sample_dir }}"
+        log_dir: "{{ data_log_dir }}"
+        result_dir: "{{ data_result_dir }}"
+    - name: Transfer DH params
+      copy:
+        src: ffdhe2048.txt
+        dest: "{{ dh_param }}"
+    - name: Enable Sample Platform config file
+      file:
+        src: /etc/nginx/sites-available/sample_platform
+        dest: /etc/nginx/sites-enabled/sample_platform
+        state: link
+    - import_tasks: generate_ssl_cert.yaml
+      vars:
+        provider: self_signed
+        task: generate
+        domain: "{{ domain_name }}"
+        key_path: "{{ ssl_key }}"
+        cert_path: "{{ ssl_cert }}"
+        reload_nginx: yes
