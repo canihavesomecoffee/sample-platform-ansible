@@ -1,0 +1,34 @@
+"""
+Auto-generated module, using Ansible, to store configuration for the app.
+
+If you made a mistake while configuring, you can still tune the fields below.
+
+Beware though that incorrect configuration might cause non-working software!
+"""
+
+
+APPLICATION_ROOT = None
+CSRF_ENABLED = True
+DATABASE_URI = 'mysql+pymysql://{{ mysql_db_user }}:{{ mysql_db_pass }}@localhost:3306/{{ mysql_db_name }}?charset=utf8'
+GITHUB_BOT = '{{ github_bot }}'
+GITHUB_TOKEN = '{{ github_token }}'
+GITHUB_OWNER = '{{ github_owner }}'
+GITHUB_REPOSITORY = '{{ github_repo }}'
+SERVER_NAME = '{{ domain_name }}'
+EMAIL_DOMAIN = '{{ domain_email }}'
+EMAIL_API_KEY = '{{ domain_api }}'
+HMAC_KEY = '{{ lookup('password', '~/credentials/' + ansible_host + '/app/hmac_key length=32 chars=ascii_letters') }}'
+GITHUB_DEPLOY_KEY = '{{ github_deploy_secret }}'
+GITHUB_CI_KEY = '{{ github_ci_secret }}'
+GITHUB_CLIENT_ID = '{{ github_client_id }}'
+GITHUB_CLIENT_SECRET = '{{ github_client_secret }}'
+INSTALL_FOLDER = '{{ install_dir }}'
+KVM_LINUX_NAME = '{{ vm_name_linux }}'
+KVM_WINDOWS_NAME = '{{ vm_name_windows }}'
+KVM_MAX_RUNTIME = {{ ci_runtime }}  # In minutes
+SAMPLE_REPOSITORY = '{{ data_dir }}/'
+SESSION_COOKIE_PATH = '/'
+FTP_PORT = {{ ftp_port }}
+MAX_CONTENT_LENGTH = {{ max_sample_size_http }}
+MIN_PWD_LEN = {{ min_password_length }}
+MAX_PWD_LEN = {{ max_password_length }}

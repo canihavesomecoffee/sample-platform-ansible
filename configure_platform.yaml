@@ -1,0 +1,65 @@
+---
+- hosts: sample_platform_4
+  remote_user: root
+  vars_prompt:
+    - name: domain_email
+      prompt: Enter the domain name that will be used for sending emails through MailGun
+      default: "{{ domain_name }}"
+      private: no
+    - name: domain_api
+      prompt: Enter the MailGun API key (or leave blank if you don't want to send emails)
+      private: no
+    - name: github_bot
+      prompt: "What is the name of the account that is used as a bot?"
+      private: no
+    - name: github_token
+      prompt: "What is the Github Token which will be used to steer the GitHub bot (Generate here : https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line)?"
+      private: no
+    - name: github_repo
+      prompt: Which GitHub repository (name only!) should we be cloning for CI functionality?
+      default: "ccextractor"
+      private: no
+    - name: github_owner
+      prompt: Which organistation or user account does the repository belong to?
+      default: "CCExtractor"
+      private: no
+    - name: github_deploy_secret
+      prompt: "Github Automated Deploy Webhook Secret (More info : https://developer.github.com/webhooks/)"
+      private: no
+    - name: github_ci_secret
+      prompt: "Github CI Webhook Secret (More info: https://developer.github.com/webhooks/)"
+      private: no
+    - name: github_client_id
+      prompt: "The ID of the GitHub application that will be used to post to the repository when a sample is submitted (https://github.com/settings/applications/new)"
+      private: no
+    - name: github_client_secret
+      prompt: "The client secret linked to the above application"
+      private: no
+    - name: ci_runtime
+      prompt: How long (minutes) should a test run last before it's aborted?
+      default: 120
+      private: no
+    - name: ftp_port
+      prompt: What FTP port should be used?
+      default: 21
+      private: no
+    - name: max_sample_size_http
+      prompt: How big (in bytes) should the maximum sample size be?
+      default: 536870912
+      private: no
+    - name: min_password_length
+      prompt: What should be the minimum password length for users?
+      default: 10
+      private: no
+    - name: max_password_length
+      prompt: What should be the maximum password length for users?
+      default: 500
+      private: no
+  vars:
+    mysql_db_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/mysql/app length=15 chars=ascii_letters') }}"
+  tasks:
+    - name: Create the inventory file
+      template:
+        src: sample_platform_config.py.j2
+        dest: /var/www/sample_platform/config.py
+
