@@ -95,25 +95,21 @@
         owner: "{{ install_user }}"
         group: "{{ install_group }}"
         mode: 0755
-        loop:
-          - "{{ data_dir }}"
-          - "{{ data_dir }}/ci-tests"
-          - "{{ data_dir }}/unsafe-ccextractor"
-          - "{{ data_dir }}/TempFiles"
-          - "{{ data_log_dir }}"
-          - "{{ data_result_dir }}"
-          - "{{ data_dir }}/TestFiles"
-          - "{{ data_media_sample_dir }}"
-          - "{{ data_dir }}/QueuedFiles"
+      loop:
+        - "{{ data_dir }}"
+        - "{{ data_dir }}/ci-tests"
+        - "{{ data_dir }}/unsafe-ccextractor"
+        - "{{ data_dir }}/TempFiles"
+        - "{{ data_log_dir }}"
+        - "{{ data_result_dir }}"
+        - "{{ data_dir }}/TestFiles"
+        - "{{ data_media_sample_dir }}"
+        - "{{ data_dir }}/QueuedFiles"
     - name: Create Nginx config file
       template:
         src: nginx.conf.j2
         dest: /etc/nginx/sites-available/sample_platform
       vars:
-        domain_name: "{{ domain_name }}"
-        ssl_cert: "{{ ssl_cert }}"
-        ssl_key: "{{ ssl_key }}"
-        dh_param: "{{ dh_param }}"
         web_dir: "{{ install_dir }}"
         sample_dir: "{{ data_media_sample_dir }}"
         log_dir: "{{ data_log_dir }}"
@@ -127,11 +123,24 @@
         src: /etc/nginx/sites-available/sample_platform
         dest: /etc/nginx/sites-enabled/sample_platform
         state: link
-    - import_tasks: generate_ssl_cert.yaml
+    - import_tasks: ssl_cert_generic.yaml
       vars:
         provider: self_signed
         task: generate
-        domain: "{{ domain_name }}"
         key_path: "{{ ssl_key }}"
         cert_path: "{{ ssl_cert }}"
         reload_nginx: yes
+    - import_tasks: ssl_cert_generic.yaml
+      when: use_lets_encrypt
+      vars:
+        provider: lets_encrypt
+        task: install
+        key_path: "{{ ssl_key }}"
+        cert_path: "{{ ssl_cert }}"
+    - import_tasks: ssl_cert_generic.yaml
+        when: use_lets_encrypt
+        vars:
+          provider: lets_encrypt
+          task: generate
+          key_path: "{{ ssl_key }}"
+          cert_path: "{{ ssl_cert }}"

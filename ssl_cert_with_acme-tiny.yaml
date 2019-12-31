@@ -1,0 +1,83 @@
+---
+- hosts: sample_platform_4
+  remote_user: root
+  vars:
+    acme_user: acme_renew
+    acme_group: acme_renew
+    acme_home_dir: /home/acme_renew
+    acme_account_key: '{{ acme_home_dir }}/account.key'
+    acme_intermediate: '{{ acme_home_dir }}/intermediate.crt'
+    acme_csr: '{{ acme_home_dir }}/platform.csr'
+    acme_renew_script: '{{ acme_home_dir }}/acme_renew.sh'
+    acme_tiny_dir: '{{ acme_home_dir }}/acme-tiny'
+    acme_log_file: '/var/log/acme_tiny.log'
+  tasks:
+    - name: 'Install/Configure acme-tiny'
+      when: task == "install"
+      block:
+        - name: 'Add {{ acme_user }} user'
+          user:
+            name: '{{ acme_user }}'
+            group: '{{ acme_group }}'
+            home: '{{ acme_home_dir }}'
+            comment: 'Bot account for renewing Let's Encrypt certificates'
+        - name: Add sudo permission for nginx reload
+          lineinfile:
+            path: /etc/sudoers
+            state: present
+            regexp: '^{{ acme_user }}\s'
+            line: '{{ acme_user }}    ALL=NOPASSWD: /usr/sbin/service nginx *'
+        - name: Create challenge directory with correct permissions
+          file:
+            path: "{{ acme_challenge_dir }}"
+            state: directory
+            owner: "{{ acme_user }}"
+            group: "{{ acme_group }}"
+            mode: 0755
+        - name: Create log file with correct permission
+          file:
+            path: "{{ acme_log_file }}"
+            mode: 0644
+            state: touch
+            owner: "{{ acme_user }}"
+            group: "{{ acme_group }}"
+        - name: Install pip package for acme-tiny
+          pip:
+            name: acme-tiny
+        - name: Clone acme_tiny repository, and configure everything
+          block:
+            - name: Copy renewal script
+              template:
+                src: acme_renew.sh.j2
+                dest: '{{ acme_renew_script }}'
+                owner: "{{ acme_user }}"
+                group: "{{ acme_group }}"
+                mode: 0755
+              vars:
+                acme_script: 'acme_tiny'
+                acme_certificate: '{{ acme_home_dir}}/platform.crt'
+            - name: Set monthly cron for renewal
+              cron:
+                name: "monthly LE certificate renewal"
+                day: 1
+                minute: 0
+                hour: 0
+                month: "*"
+                user: "{{ acme_user }}"
+                job: "{{ acme_renew_script }} 2>> {{ acme_log_file }}"
+            - name: Generate Let's Encrypt Account key
+              openssl_privatekey:
+                path: '{{ acme_account_key }}'
+            - name: Obtain the intermediate certificate from Let's Encrypt
+              get_url:
+                url: https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem
+                dest: '{{ acme_intermediate }}'
+            - name: Create CSR for requesting certificate from Let's Encrypt
+              openssl_csr:
+                path: '{{ acme_csr }}'
+                privatekey_path: '{{ acme_private_key }}'
+                common_name: "{{ server_hostname }}"
+          become: true
+          become_user: '{{ acme_user }}'
+    - name: "Generate certificate"
+      when: task == "generate"
