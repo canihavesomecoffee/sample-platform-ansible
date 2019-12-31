@@ -142,7 +142,7 @@
             name: smbd
             state: reloaded
         - name: Add SMB user
-          shell: "printf '{{ smb_user }}\n{{ smb_pass }}\n' | smbpasswd -a {{ smb_user }}"
+          shell: "printf '{{ smb_pass }}\n{{ smb_pass }}\n' | smbpasswd -a {{ smb_user }}"
     - name: Create Nginx config file
       template:
         src: nginx.conf.j2
