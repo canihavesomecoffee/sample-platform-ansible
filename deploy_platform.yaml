@@ -12,6 +12,7 @@
     dh_param: /etc/ssl/dhparam.pem
     ssl_key: /etc/ssl/private/sample_platform.key
     ssl_cert: /etc/ssl/sample_platform.crt
+    platform_file: /etc/init.d/platform
   tasks:
     - name: Install python 3
       apt:
@@ -142,3 +143,15 @@
       when: use_lets_encrypt
       vars:
         task: generate
+    - name: Add auto-launch service for platform
+      template:
+        src: service.j2
+        dest: '{{ platform_file }}'
+        mode: '0755'
+    - name: Enable auto-launch service for platform
+      command: update-rc.d platform defaults
+    - name: Configure the Sample Platform's python config file
+      fail:
+        msg: Finalize this! # import_playbook: configure_platform.yaml
+    - name: Start the service
+      command: update-rc.d platform start
