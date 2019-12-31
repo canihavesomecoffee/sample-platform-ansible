@@ -13,6 +13,9 @@
     ssl_key: /etc/ssl/private/sample_platform.key
     ssl_cert: /etc/ssl/sample_platform.crt
     platform_file: /etc/init.d/platform
+    smb_user: ci_bot
+    smb_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/smb_password length=15 chars=ascii_letters') }}"
+
   tasks:
     - name: Install python 3
       apt:
@@ -35,6 +38,7 @@
           - mediainfo
           - mariadb-server
           - git
+          - samba
     - name: Update pip, setuptools and wheel
       pip:
         name: pip,setuptools,wheel
@@ -53,42 +57,44 @@
       pip:
         requirements: "{{ install_dir }}/requirements.txt"
         state: forcereinstall
-    - name: Make sure the MySQL server is running at startup
-      service:
-        name: mysql
-        state: started
-        enabled: yes
-    - name: Change password for MySQL root user
-      mysql_user:
-        login_user: root
-        login_password: "{{ mysql_root_pass }}"
-        login_unix_socket: /var/run/mysqld/mysqld.sock
-        check_implicit_admin: yes
-        name: root
-        password: "{{ mysql_root_pass }}"
-        host: localhost
-        priv: "*.*:ALL,GRANT"
-    - name: Create .my.cnf MySQL config for root user
-      template:
-        src: .my.cnf.j2
-        dest: /root/.my.cnf
-        owner: root
-        group: root
-        mode: '0600'
-      vars:
-        password: "{{ mysql_root_pass }}"
-    - name: Create a new database with name '{{ mysql_db_name }}'
-      mysql_db:
-        name: "{{ mysql_db_name }}"
-        state: present
-    - name: 'Add a Sample Platform user ({{ mysql_db_user }}) for MySQL'
-      mysql_user:
-        login_user: root
-        login_password: "{{ mysql_root_pass }}"
-        name: "{{ mysql_db_user }}"
-        password: "{{ mysql_db_pass }}"
-        host: localhost
-        priv: "{{ mysql_db_name }}.*:ALL,GRANT"
+    - name: Configure MySQL
+      block:
+        - name: Make sure the MySQL server is running at startup
+          service:
+            name: mysql
+            state: started
+            enabled: yes
+        - name: Change password for MySQL root user
+          mysql_user:
+            login_user: root
+            login_password: "{{ mysql_root_pass }}"
+            login_unix_socket: /var/run/mysqld/mysqld.sock
+            check_implicit_admin: yes
+            name: root
+            password: "{{ mysql_root_pass }}"
+            host: localhost
+            priv: "*.*:ALL,GRANT"
+        - name: Create .my.cnf MySQL config for root user
+          template:
+            src: .my.cnf.j2
+            dest: /root/.my.cnf
+            owner: root
+            group: root
+            mode: '0600'
+          vars:
+            password: "{{ mysql_root_pass }}"
+        - name: Create a new database with name '{{ mysql_db_name }}'
+          mysql_db:
+            name: "{{ mysql_db_name }}"
+            state: present
+        - name: 'Add a Sample Platform user ({{ mysql_db_user }}) for MySQL'
+          mysql_user:
+            login_user: root
+            login_password: "{{ mysql_root_pass }}"
+            name: "{{ mysql_db_user }}"
+            password: "{{ mysql_db_pass }}"
+            host: localhost
+            priv: "{{ mysql_db_name }}.*:ALL,GRANT"
     - name: Create all directories for holding data
       file:
         path: "{{ item }}"
@@ -105,6 +111,38 @@
         - "{{ data_dir }}/TestFiles"
         - "{{ data_media_sample_dir }}"
         - "{{ data_dir }}/QueuedFiles"
+    - name: Configure Samba
+      block:
+        - name: Add Samba share
+          blockinfile:
+            path: /etc/samba/smb.conf
+            block: |
+              [repository]
+              path = {{ data_dir }}
+              available = yes
+              valid users = {{ smb_user }}
+              read only = yes
+              browseable = yes
+              public = yes
+              writable = no
+        - name: Make Samba only listening on localhost and custom subnet
+          lineinfile:
+            path: /etc/samba/smb.conf
+            state: present
+            regexp: '^;   interfaces\s'
+            line: '   interfaces = 127.0.0.0/8 10.0.1.1'
+        - name: Make Samba only listen to the interfaces defined above
+          lineinfile:
+            path: /etc/samba/smb.conf
+            state: present
+            regexp: '^;   bind interfaces\s'
+            line: '   bind interfaces only = yes'
+        - name: Reload Samba to apply config changes
+          service:
+            name: smbd
+            state: reloaded
+        - name: Add SMB user
+          shell: "printf '{{ smb_user }}\n{{ smb_pass }}\n' | smbpasswd -a {{ smb_user }}"
     - name: Create Nginx config file
       template:
         src: nginx.conf.j2
