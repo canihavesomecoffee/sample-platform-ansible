@@ -8,7 +8,7 @@
             name: '{{ acme_user }}'
             group: '{{ acme_group }}'
             home: '{{ acme_home_dir }}'
-            comment: 'Bot account for renewing Let's Encrypt certificates'
+            comment: "Bot account for renewing Let's Encrypt certificates"
         - name: Add sudo permission for nginx reload
           lineinfile:
             path: /etc/sudoers
