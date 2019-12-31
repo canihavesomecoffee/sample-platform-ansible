@@ -1,0 +1,17 @@
+- name: Grouped tasks for generating a self-signed certificate
+  when: task == "generate"
+  block:
+    - name: Generate an OpenSSL private key.
+      openssl_privatekey:
+        path: '{{ key_path }}'
+    - name: Generate an OpenSSL CSR.
+      openssl_csr:
+        path: '{{ cert_path }}.csr'
+        privatekey_path: '{{ key_path }}'
+        common_name: "{{ server_hostname }}"
+    - name: Generate a Self Signed OpenSSL certificate
+      openssl_certificate:
+        path: '{{ cert_path }}'
+        privatekey_path: '{{ key_path }}'
+        csr_path: '{{ cert_path }}.csr'
+        provider: selfsigned
