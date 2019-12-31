@@ -31,6 +31,18 @@
         - name: Install pip package for acme-tiny
           pip:
             name: acme-tiny
+        - name: Create CSR for requesting certificate from Let's Encrypt
+          openssl_csr:
+            path: '{{ acme_csr }}'
+            privatekey_path: '{{ acme_private_key }}'
+            common_name: "{{ server_hostname }}"
+        - name: Change permissions on CSR
+          file:
+            path: '{{ acme_csr }}'
+            state: file
+            mode: 0644
+            owner: "{{ acme_user }}"
+            group: "{{ acme_group }}"
         - name: Clone acme_tiny repository, and configure everything
           block:
             - name: Copy renewal script
@@ -46,9 +58,9 @@
             - name: Set monthly cron for renewal
               cron:
                 name: "monthly LE certificate renewal"
-                day: 1
-                minute: 0
-                hour: 0
+                day: '1'
+                minute: '0'
+                hour: '0'
                 month: "*"
                 user: "{{ acme_user }}"
                 job: "{{ acme_renew_script }} 2>> {{ acme_log_file }}"
@@ -59,11 +71,6 @@
               get_url:
                 url: https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem
                 dest: '{{ acme_intermediate }}'
-            - name: Create CSR for requesting certificate from Let's Encrypt
-              openssl_csr:
-                path: '{{ acme_csr }}'
-                privatekey_path: '{{ acme_private_key }}'
-                common_name: "{{ server_hostname }}"
           become: true
           become_user: '{{ acme_user }}'
     - name: "Generate certificate"
