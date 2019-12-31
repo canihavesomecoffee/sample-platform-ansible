@@ -53,7 +53,7 @@
                 group: "{{ acme_group }}"
                 mode: 0755
               vars:
-                acme_script: 'acme_tiny'
+                acme_script: 'acme-tiny'
                 acme_certificate: '{{ acme_home_dir}}/platform.crt'
             - name: Set monthly cron for renewal
               cron:
@@ -86,5 +86,4 @@
     acme_intermediate: '{{ acme_home_dir }}/intermediate.crt'
     acme_csr: '{{ acme_home_dir }}/platform.csr'
     acme_renew_script: '{{ acme_home_dir }}/acme_renew.sh'
-    acme_tiny_dir: '{{ acme_home_dir }}/acme-tiny'
     acme_log_file: '/var/log/acme_tiny.log'
