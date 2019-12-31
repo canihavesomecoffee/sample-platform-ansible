@@ -123,21 +123,24 @@
         src: /etc/nginx/sites-available/sample_platform
         dest: /etc/nginx/sites-enabled/sample_platform
         state: link
-    - import_tasks: ssl_cert_generic.yaml
+    - name: Generate self-signed certficate
+      import_tasks: ssl_cert_generic.yaml
       vars:
         provider: self_signed
         task: generate
         key_path: "{{ ssl_key }}"
         cert_path: "{{ ssl_cert }}"
         reload_nginx: yes
-    - import_tasks: ssl_cert_generic.yaml
+    - name: Install Let's Encrypt module
+      import_tasks: ssl_cert_generic.yaml
       when: use_lets_encrypt
       vars:
         provider: lets_encrypt
         task: install
         key_path: "{{ ssl_key }}"
         cert_path: "{{ ssl_cert }}"
-    - import_tasks: ssl_cert_generic.yaml
+    - name: Generate Let's Encrypt certificate
+      import_tasks: ssl_cert_generic.yaml
       when: use_lets_encrypt
       vars:
         provider: lets_encrypt
