@@ -69,6 +69,9 @@
           become_user: '{{ acme_user }}'
     - name: "Generate certificate"
       when: task == "generate"
+      command: "{{ acme_renew_script }}"
+      become: true
+      become_user: '{{ acme_user }}'
   vars:
     acme_user: acme_renew
     acme_group: acme_renew
