@@ -138,9 +138,9 @@
         key_path: "{{ ssl_key }}"
         cert_path: "{{ ssl_cert }}"
     - import_tasks: ssl_cert_generic.yaml
-        when: use_lets_encrypt
-        vars:
-          provider: lets_encrypt
-          task: generate
-          key_path: "{{ ssl_key }}"
-          cert_path: "{{ ssl_cert }}"
+      when: use_lets_encrypt
+      vars:
+        provider: lets_encrypt
+        task: generate
+        key_path: "{{ ssl_key }}"
+        cert_path: "{{ ssl_cert }}"
