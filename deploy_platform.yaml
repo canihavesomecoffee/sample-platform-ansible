@@ -129,6 +129,7 @@
         task: generate
         key_path: "{{ ssl_key }}"
         cert_path: "{{ ssl_cert }}"
+        server_hostname: "{{ domain_name }}"
         reload_nginx: yes
     - name: Install Let's Encrypt module
       include_tasks: task_ssl_cert_generic.yaml
@@ -138,6 +139,7 @@
         task: install
         key_path: "{{ ssl_key }}"
         cert_path: "{{ ssl_cert }}"
+        server_hostname: "{{ domain_name }}"
     - name: Generate Let's Encrypt certificate
       include_tasks: task_ssl_cert_generic.yaml
       when: use_lets_encrypt
