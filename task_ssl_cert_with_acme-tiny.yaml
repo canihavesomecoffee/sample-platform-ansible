@@ -1,17 +1,5 @@
----
-- hosts: sample_platform_4
-  remote_user: root
-  vars:
-    acme_user: acme_renew
-    acme_group: acme_renew
-    acme_home_dir: /home/acme_renew
-    acme_account_key: '{{ acme_home_dir }}/account.key'
-    acme_intermediate: '{{ acme_home_dir }}/intermediate.crt'
-    acme_csr: '{{ acme_home_dir }}/platform.csr'
-    acme_renew_script: '{{ acme_home_dir }}/acme_renew.sh'
-    acme_tiny_dir: '{{ acme_home_dir }}/acme-tiny'
-    acme_log_file: '/var/log/acme_tiny.log'
-  tasks:
+- name: Task block for ACME tiny
+  block:
     - name: 'Install/Configure acme-tiny'
       when: task == "install"
       block:
@@ -81,3 +69,13 @@
           become_user: '{{ acme_user }}'
     - name: "Generate certificate"
       when: task == "generate"
+  vars:
+    acme_user: acme_renew
+    acme_group: acme_renew
+    acme_home_dir: /home/acme_renew
+    acme_account_key: '{{ acme_home_dir }}/account.key'
+    acme_intermediate: '{{ acme_home_dir }}/intermediate.crt'
+    acme_csr: '{{ acme_home_dir }}/platform.csr'
+    acme_renew_script: '{{ acme_home_dir }}/acme_renew.sh'
+    acme_tiny_dir: '{{ acme_home_dir }}/acme-tiny'
+    acme_log_file: '/var/log/acme_tiny.log'
