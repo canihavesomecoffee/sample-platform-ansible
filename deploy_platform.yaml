@@ -141,6 +141,10 @@
           service:
             name: smbd
             state: reloaded
+        - name: 'Add {{ smb_user }} user'
+          user:
+            name: '{{ smb_user }}'
+            comment: "Bot account for accessing the SMB share"
         - name: Add SMB user
           shell: "printf '{{ smb_pass }}\n{{ smb_pass }}\n' | smbpasswd -a {{ smb_user }}"
     - name: Create Nginx config file
