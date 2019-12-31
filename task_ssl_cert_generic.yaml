@@ -1,22 +1,25 @@
-- name: Generate an OpenSSL private key.
-  when: provider == "self_signed" and task == "generate"
-  openssl_privatekey:
-    path: '{{ key_path }}'
-- name: Generate an OpenSSL CSR.
-  when: provider == "self_signed" and task == "generate"
-  openssl_csr:
-    path: '{{ cert_path }}.csr'
-    privatekey_path: '{{ key_path }}'
-    common_name: "{{ server_hostname }}"
-- name: Generate a Self Signed OpenSSL certificate
-  when: provider == "self_signed" and task == "generate"
-  openssl_certificate:
-    path: '{{ cert_path }}'
-    privatekey_path: '{{ key_path }}'
-    csr_path: '{{ cert_path }}.csr'
-    provider: selfsigned
+- name: OpenSSL tasks for self-signed use
+  when: provider == "self_signed"
+  block:
+    - name: Grouped tasks for generating a self-signed certificate
+      when: task == "generate"
+      block:
+        - name: Generate an OpenSSL private key.
+          openssl_privatekey:
+            path: '{{ key_path }}'
+        - name: Generate an OpenSSL CSR.
+          openssl_csr:
+            path: '{{ cert_path }}.csr'
+            privatekey_path: '{{ key_path }}'
+            common_name: "{{ server_hostname }}"
+        - name: Generate a Self Signed OpenSSL certificate
+          openssl_certificate:
+            path: '{{ cert_path }}'
+            privatekey_path: '{{ key_path }}'
+            csr_path: '{{ cert_path }}.csr'
+            provider: selfsigned
 - name: Use Let's Encrypt for actions
-  import_tasks: task_ssl_cert_with_acme-tiny.yaml
+  include_tasks: task_ssl_cert_with_acme-tiny.yaml
   when: provider == "lets_encrypt"
   vars:
     acme_private_key: '{{ ssl_key }}'
