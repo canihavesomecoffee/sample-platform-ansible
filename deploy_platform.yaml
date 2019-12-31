@@ -98,7 +98,6 @@
       loop:
         - "{{ data_dir }}"
         - "{{ data_dir }}/ci-tests"
-        - "{{ data_dir }}/unsafe-ccextractor"
         - "{{ data_dir }}/TempFiles"
         - "{{ data_log_dir }}"
         - "{{ data_result_dir }}"
