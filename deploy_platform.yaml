@@ -129,13 +129,13 @@
           lineinfile:
             path: /etc/samba/smb.conf
             state: present
-            regexp: '^;   interfaces\s'
+            regexp: '^;?   interfaces\s'
             line: '   interfaces = 127.0.0.0/8 10.0.1.1'
         - name: Make Samba only listen to the interfaces defined above
           lineinfile:
             path: /etc/samba/smb.conf
             state: present
-            regexp: '^;   bind interfaces\s'
+            regexp: '^;?   bind interfaces\s'
             line: '   bind interfaces only = yes'
         - name: Reload Samba to apply config changes
           service:
