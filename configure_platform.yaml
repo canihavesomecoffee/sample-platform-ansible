@@ -1,5 +1,6 @@
 ---
-- hosts: sample_platform_4
+- hosts: localhost
+  gather_facts: no
   vars_prompt:
     - name: domain_email
       prompt: Enter the domain name that will be used for sending emails through MailGun (leave empty to use domain name configured for serving the platform)
@@ -58,8 +59,16 @@
     mysql_db_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/mysql/app length=15 chars=ascii_letters') }}"
   tasks:
     - set_fact:
-        domain_email: "{{ domain_name }}"
+        domain_email: "{{ hostvars['sample_platform_4']['domain_name'] }}"
       when: domain_email == ""
+    - set_fact:
+        mysql_db_user: "{{ hostvars['sample_platform_4']['mysql_db_user'] }}"
+        mysql_db_name: "{{ hostvars['sample_platform_4']['mysql_db_name'] }}"
+        domain_name: "{{ hostvars['sample_platform_4']['domain_name'] }}"
+        install_dir: "{{ hostvars['sample_platform_4']['install_dir'] }}"
+        data_dir: "{{ hostvars['sample_platform_4']['data_dir'] }}"
+        vm_name_linux: "{{ hostvars['sample_platform_4']['vm_name_linux'] }}"
+        vm_name_windows: "{{ hostvars['sample_platform_4']['vm_name_windows'] }}"
     - name: Create the inventory file
       template:
         src: sample_platform_config.py.j2
