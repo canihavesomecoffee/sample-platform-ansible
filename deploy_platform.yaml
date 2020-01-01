@@ -18,9 +18,9 @@
 
   tasks:
     - name: Check if configuration file already exists
-        stat:
-          path: sample_platform_config.py
-        register: config_created
+      stat:
+        path: sample_platform_config.py
+      register: config_created
     - fail: sample_platform_config.py is missing! Run the configure_platform first
       when: not config_created.stat.exists
     - name: Install python 3
