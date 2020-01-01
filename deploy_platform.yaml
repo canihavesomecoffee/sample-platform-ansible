@@ -18,8 +18,7 @@
 
   tasks:
     - name: Check if configuration file already exists
-      stat:
-        path: sample_platform_config.py
+      local_action: stat path=sample_platform_config.py
       register: config_created
     - fail:
         msg: sample_platform_config.py is missing! Run the configure_platform first
