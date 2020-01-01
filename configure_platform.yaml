@@ -1,6 +1,6 @@
 ---
 - hosts: sample_platform_4
-  remote_user: root
+  gather_facts: no
   vars_prompt:
     - name: domain_email
       prompt: Enter the domain name that will be used for sending emails through MailGun
@@ -61,5 +61,4 @@
     - name: Create the inventory file
       template:
         src: sample_platform_config.py.j2
-        dest: /var/www/sample_platform/config.py
-
+        dest: sample_platform_config.py

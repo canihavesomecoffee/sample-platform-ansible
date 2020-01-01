@@ -193,7 +193,8 @@
     - name: Enable auto-launch service for platform
       command: update-rc.d platform defaults
     - name: Configure the Sample Platform's python config file
-      fail:
-        msg: Finalize this! # import_playbook: configure_platform.yaml
+      copy:
+        src: sample_platform_config.py
+        dest: "{{ install_dir }}/config.py"
     - name: Start the service
       command: update-rc.d platform start
