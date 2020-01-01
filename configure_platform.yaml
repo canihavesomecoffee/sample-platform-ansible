@@ -3,7 +3,7 @@
   vars_prompt:
     - name: domain_email
       prompt: Enter the domain name that will be used for sending emails through MailGun
-      default: "{{ domain_name }}"
+      default: "{{ hostvars['sample_platform_4']['domain_name'] }}"
       private: no
     - name: domain_api
       prompt: Enter the MailGun API key (or leave blank if you don't want to send emails)
