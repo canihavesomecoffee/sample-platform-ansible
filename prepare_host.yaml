@@ -25,8 +25,7 @@
       template:
         src: inventory.j2
         dest: inventory.yaml
-- name: Check if configuration file already exists
-  stat:
+- stat:
     path: sample_platform_config.py
   register: config_created
 - name: Prepare other inventory file
