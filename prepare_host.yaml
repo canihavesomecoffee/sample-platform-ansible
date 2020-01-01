@@ -25,10 +25,3 @@
       template:
         src: inventory.j2
         dest: inventory.yaml
-    - name: Check if configuration file already exists
-      stat:
-        path: sample_platform_config.py
-      register: config_created
-- name: Prepare other inventory file
-  when: config_created.stat.exists
-  import_playbook: configure_platform.yaml

@@ -17,6 +17,12 @@
     smb_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/smb_password length=15 chars=ascii_letters') }}"
 
   tasks:
+    - name: Check if configuration file already exists
+        stat:
+          path: sample_platform_config.py
+        register: config_created
+    - fail: sample_platform_config.py is missing! Run the configure_platform first
+      when: not config_created.stat.exists
     - name: Install python 3
       apt:
         update_cache: yes

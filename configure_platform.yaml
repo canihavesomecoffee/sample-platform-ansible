@@ -1,6 +1,5 @@
 ---
 - hosts: sample_platform_4
-  gather_facts: no
   vars_prompt:
     - name: domain_email
       prompt: Enter the domain name that will be used for sending emails through MailGun
