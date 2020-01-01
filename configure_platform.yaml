@@ -2,8 +2,8 @@
 - hosts: sample_platform_4
   vars_prompt:
     - name: domain_email
-      prompt: Enter the domain name that will be used for sending emails through MailGun
-      default: "{{ hostvars['sample_platform_4']['domain_name'] }}"
+      prompt: Enter the domain name that will be used for sending emails through MailGun (leave empty to use domain name configured for serving the platform)
+      default: ""
       private: no
     - name: domain_api
       prompt: Enter the MailGun API key (or leave blank if you don't want to send emails)
@@ -57,6 +57,9 @@
   vars:
     mysql_db_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/mysql/app length=15 chars=ascii_letters') }}"
   tasks:
+    - set_fact:
+        domain_email: "{{ domain_name }}"
+      when: domain_email == ""
     - name: Create the inventory file
       template:
         src: sample_platform_config.py.j2
