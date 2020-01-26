@@ -17,22 +17,26 @@
     smb_pass: "{{ lookup('password', '~/credentials/' + ansible_host + '/smb_password length=15 chars=ascii_letters') }}"
 
   tasks:
-    - name: Check if configuration file already exists
-      local_action: stat path=sample_platform_config.py
-      register: config_created
-    - fail:
-        msg: sample_platform_config.py is missing! Run the configure_platform first
-      when: not config_created.stat.exists
-    - name: Install python 3
-      apt:
-        update_cache: yes
-        pkg:
-          - python3
-          - python3-pip
-          - python3-libvirt
-          - python3-pymysql
-    - name: Switch default python interpreter to py3
-      shell: update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1 && update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2 && update-alternatives --auto python
+    - name: Config check
+      block:
+        - name: Check if configuration file already exists
+          local_action: stat path=sample_platform_config.py
+          register: config_created
+        - fail:
+            msg: sample_platform_config.py is missing! Run the configure_platform first
+          when: not config_created.stat.exists
+    - name: Python 3 setup
+      block:
+        - name: Install python 3
+          apt:
+            update_cache: yes
+            pkg:
+              - python3
+              - python3-pip
+              - python3-libvirt
+              - python3-pymysql
+        - name: Switch default python interpreter to py3
+          shell: update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1 && update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2 && update-alternatives --auto python
     - name: Install dependencies
       apt:
         pkg:
@@ -153,54 +157,67 @@
             comment: "Bot account for accessing the SMB share"
         - name: Add SMB user
           shell: "printf '{{ smb_pass }}\n{{ smb_pass }}\n' | smbpasswd -a {{ smb_user }}"
-    - name: Create Nginx config file
-      template:
-        src: nginx.conf.j2
-        dest: /etc/nginx/sites-available/sample_platform
-      vars:
-        web_dir: "{{ install_dir }}"
-        sample_dir: "{{ data_media_sample_dir }}"
-        log_dir: "{{ data_log_dir }}"
-        result_dir: "{{ data_result_dir }}"
-    - name: Transfer DH params
-      copy:
-        src: ffdhe2048.txt
-        dest: "{{ dh_param }}"
-    - name: Enable Sample Platform config file
-      file:
-        src: /etc/nginx/sites-available/sample_platform
-        dest: /etc/nginx/sites-enabled/sample_platform
-        state: link
-    - name: Generate self-signed certficate
-      include_tasks: task_ssl_cert_self_signed.yaml
-      vars:
-        task: generate
-        key_path: "{{ ssl_key }}"
-        cert_path: "{{ ssl_cert }}"
-        server_hostname: "{{ domain_name }}"
-        reload_nginx: yes
-    - name: Install Let's Encrypt module
-      include_tasks: task_ssl_cert_with_acme-tiny.yaml
-      when: use_lets_encrypt
-      vars:
-        task: install
-        acme_private_key: '{{ ssl_key }}'
-        server_hostname: "{{ domain_name }}"
-    - name: Generate Let's Encrypt certificate
-      include_tasks: task_ssl_cert_with_acme-tiny.yaml
-      when: use_lets_encrypt
-      vars:
-        task: generate
-    - name: Add auto-launch service for platform
-      template:
-        src: service.j2
-        dest: '{{ platform_file }}'
-        mode: '0755'
-    - name: Enable auto-launch service for platform
-      command: update-rc.d platform defaults
-    - name: Configure the Sample Platform's python config file
-      copy:
-        src: sample_platform_config.py
-        dest: "{{ install_dir }}/config.py"
-    - name: Start the service
-      command: update-rc.d platform start
+    - name: Configure Nginx
+      block:
+        - name: Create Nginx config file
+          template:
+            src: nginx.conf.j2
+            dest: /etc/nginx/sites-available/sample_platform
+          vars:
+            web_dir: "{{ install_dir }}"
+            sample_dir: "{{ data_media_sample_dir }}"
+            log_dir: "{{ data_log_dir }}"
+            result_dir: "{{ data_result_dir }}"
+        - name: Transfer DH params
+          copy:
+            src: ffdhe2048.txt
+            dest: "{{ dh_param }}"
+        - name: Enable Sample Platform config file
+          file:
+            src: /etc/nginx/sites-available/sample_platform
+            dest: /etc/nginx/sites-enabled/sample_platform
+            state: link
+        - name: Generate self-signed certficate
+          include_tasks: task_ssl_cert_self_signed.yaml
+          vars:
+            task: generate
+            key_path: "{{ ssl_key }}"
+            cert_path: "{{ ssl_cert }}"
+            server_hostname: "{{ domain_name }}"
+            reload_nginx: yes
+        - name: Install Let's Encrypt module
+          include_tasks: task_ssl_cert_with_acme-tiny.yaml
+          when: use_lets_encrypt
+          vars:
+            task: install
+            acme_private_key: '{{ ssl_key }}'
+            server_hostname: "{{ domain_name }}"
+        - name: Generate Let's Encrypt certificate
+          include_tasks: task_ssl_cert_with_acme-tiny.yaml
+          when: use_lets_encrypt
+          vars:
+            task: generate
+    - name: Configure platform service
+      block:
+        - name: Add auto-launch service for platform
+          template:
+            src: service.j2
+            dest: '{{ platform_file }}'
+            mode: '0755'
+        - name: Enable auto-launch service for platform
+          command: update-rc.d platform defaults
+        - name: Configure the Sample Platform's python config file
+          copy:
+            src: sample_platform_config.py
+            dest: "{{ install_dir }}/config.py"
+        - name: Start the service
+          command: update-rc.d platform start
+    - name: KVM installation
+      block:
+        - name: Enable libvirtd
+          command: systemctl enable --now libvirtd
+        - name: Add platform user to kvm group
+          user:
+            name: '{{ install_user }}'
+            groups: kvm,libvirt
+            append: yes
