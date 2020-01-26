@@ -80,10 +80,17 @@
       become_user: '{{ acme_user }}'
     - name: "Link certificate"
       when: task == "link"
-      file:
-        src: '{{ acme_home_dir }}/platform.crt'
-        dest: '{{ destination }}'
-        state: link
+      block:
+        - name: Delete existing certificate
+          file:
+            path: '{{ destination }}'
+            state: absent
+            ignore_errors: yes
+        - name: Link new certificate
+          file:
+            src: '{{ acme_home_dir }}/platform.crt'
+            dest: '{{ destination }}'
+            state: link
   vars:
     acme_user: acme_renew
     acme_group: acme_renew
