@@ -78,7 +78,6 @@
       command: "{{ acme_renew_script }}"
       become: true
       become_user: '{{ acme_user }}'
-      ignore_errors: yes
   vars:
     acme_user: acme_renew
     acme_group: acme_renew
