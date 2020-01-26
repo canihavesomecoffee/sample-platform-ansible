@@ -53,8 +53,8 @@
                 group: "{{ acme_group }}"
                 mode: 0755
               vars:
-                acme_script: 'acme-tiny'
-                acme_certificate: '{{ acme_home_dir}}/platform.crt'
+                acme_script: '/usr/local/bin/acme-tiny'
+                acme_certificate: '{{ acme_home_dir }}/platform.crt'
             - name: Set monthly cron for renewal
               cron:
                 name: "monthly LE certificate renewal"
@@ -78,6 +78,12 @@
       command: "{{ acme_renew_script }}"
       become: true
       become_user: '{{ acme_user }}'
+    - name: "Link certificate"
+      when: task == "link"
+      file:
+        src: '{{ acme_home_dir }}/platform.crt'
+        dest: '{{ destination }}'
+        state: link
   vars:
     acme_user: acme_renew
     acme_group: acme_renew

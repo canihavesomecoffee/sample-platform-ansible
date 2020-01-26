@@ -201,6 +201,12 @@
           when: use_lets_encrypt
           vars:
             task: generate
+        - name: Generate Let's Encrypt certificate
+          include_tasks: task_ssl_cert_with_acme-tiny.yaml
+          when: use_lets_encrypt
+          vars:
+            task: link
+            destination: "{{ ssl_cert }}"
     - name: Configure platform service
       block:
         - name: Add auto-launch service for platform
