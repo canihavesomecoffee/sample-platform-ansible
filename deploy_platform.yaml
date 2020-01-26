@@ -177,6 +177,10 @@
             src: /etc/nginx/sites-available/sample_platform
             dest: /etc/nginx/sites-enabled/sample_platform
             state: link
+        - name: Remove default config file
+          file:
+            path: /etc/nginx/sites-enabled/default
+            state: absent
         - name: Generate self-signed certficate
           include_tasks: task_ssl_cert_self_signed.yaml
           vars:
