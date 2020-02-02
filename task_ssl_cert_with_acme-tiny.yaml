@@ -91,6 +91,10 @@
             src: '{{ acme_home_dir }}/platform.crt'
             dest: '{{ destination }}'
             state: link
+        - name: Reload nginx
+          service:
+            name: nginx
+            state: reloaded
   vars:
     acme_user: acme_renew
     acme_group: acme_renew

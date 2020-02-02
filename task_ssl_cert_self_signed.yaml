@@ -15,3 +15,8 @@
         privatekey_path: '{{ key_path }}'
         csr_path: '{{ cert_path }}.csr'
         provider: selfsigned
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded
+      when: reload_nginx
