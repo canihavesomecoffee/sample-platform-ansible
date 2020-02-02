@@ -62,7 +62,7 @@
         path: "{{ install_dir }}"
         owner: "{{ install_user }}"
         group: "{{ install_group }}"
-        mode: 0644
+        mode: 0755
     - name: Install pip dependencies
       pip:
         requirements: "{{ install_dir }}/requirements.txt"
