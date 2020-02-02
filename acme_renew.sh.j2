@@ -2,6 +2,6 @@
 
 echo "Renewing cert for the platform (sub)domains..."
 {{ acme_script }} --account-key {{ acme_account_key }} --csr {{ acme_csr }} --acme-dir {{ acme_challenge_dir }} > {{ acme_certificate }} || exit
-cat {{ acme_certificate }} {{ acme_intermediate }} > {{ acme_certificate }}
+cat {{ acme_intermediate }} >> {{ acme_certificate }}
 echo "Reloading nginx..."
 sudo service nginx reload
