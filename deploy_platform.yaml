@@ -67,6 +67,10 @@
       pip:
         requirements: "{{ install_dir }}/requirements.txt"
         state: forcereinstall
+    - name: Create random secret_key
+      shell: "head -c 24 /dev/urandom > {{ install_dir }}/secret_key"
+    - name: Create random secret_csrf
+        shell: "head -c 24 /dev/urandom > {{ install_dir }}/secret_csrf"
     - name: Configure MySQL
       block:
         - name: Make sure the MySQL server is running at startup
