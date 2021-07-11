@@ -1,0 +1,52 @@
+version: '3.6'
+
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx-front-facing
+    restart: always
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs:ro
+      - config:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - chall_html:/usr/share/nginx/html
+      - dhparam:/etc/nginx/dhparam
+    environment:
+      - ENABLE_IPV6=true
+      - SSL_POLICY=Mozilla-Intermediate
+
+  nginx-proxy-letsencrypt:
+    image: nginxproxy/acme-companion
+    container_name: nginx-lets-encrypt
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/etc/nginx/certs:rw
+      - config:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - chall_html:/usr/share/nginx/html
+
+  platform_db_mariadb:
+    image: mariadb
+    container_name: platform_db_mariadb
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    restart: always
+    volumes:
+      - db:/var/lib/mysql
+      - /platform/db_setup:/docker-entrypoint-initdb.d
+    env_file:
+      - /platform/db.env
+
+volumes:
+  certs:
+  config:
+  vhost:
+  chall_html:
+  dhparam:
+  db:
