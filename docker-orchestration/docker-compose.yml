@@ -4,6 +4,8 @@ version: "3.6"
 services:
   sample-platforn:
     restart: always
+    volumes:
+      - sample_platform:/var/www/sample-platform/
   # TODO: add volume for config and data storage
 
   nginx-proxy:
