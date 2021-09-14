@@ -1,6 +1,13 @@
-version: '3.6'
+version: "3.6"
 
+# TODO: connect sample-platform with nginx and db
 services:
+  sample-platforn:
+    restart: always
+    volumes:
+      - sample_platform:/var/www/sample-platform/
+  # TODO: add volume for config and data storage
+
   nginx-proxy:
     image: nginxproxy/nginx-proxy
     container_name: nginx-front-facing
@@ -50,3 +57,4 @@ volumes:
   chall_html:
   dhparam:
   db:
+  sample_platform:
