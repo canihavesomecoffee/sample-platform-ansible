@@ -2,15 +2,9 @@ version: "3.6"
 
 # TODO: connect sample-platform with nginx and db
 services:
-  sample-platforn:
-    restart: always
-    volumes:
-      - sample_platform:/var/www/sample-platform/
-  # TODO: add volume for config and data storage
-
   nginx-proxy:
     image: nginxproxy/nginx-proxy
-    container_name: nginx-front-facing
+    container_name: nginx-proxy
     restart: always
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
@@ -27,10 +21,12 @@ services:
     environment:
       - ENABLE_IPV6=true
       - SSL_POLICY=Mozilla-Intermediate
+    networks:
+      - proxy-tier
 
   nginx-proxy-letsencrypt:
     image: nginxproxy/acme-companion
-    container_name: nginx-lets-encrypt
+    container_name: nginx-proxy-acme
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -38,6 +34,12 @@ services:
       - config:/etc/nginx/conf.d
       - vhost:/etc/nginx/vhost.d
       - chall_html:/usr/share/nginx/html
+    environment:
+      - DEFAULT_EMAIL=letsencrypt@canihavesome.coffee
+    networks:
+      - proxy-tier
+    depends_on:
+      - nginx-proxy
 
   platform_db_mariadb:
     image: mariadb
@@ -49,6 +51,42 @@ services:
       - /platform/db_setup:/docker-entrypoint-initdb.d
     env_file:
       - /platform/db.env
+    networks:
+      datagrip:
+        ipv4_address: 10.5.0.2
+      default:
+
+  platform_python:
+    build: ./python
+    container_name: platform_python
+    restart: always
+    expose:
+      - 5000
+    volumes:
+      - sample_platform:/var/www/sample-platform/
+      - repository:/repository
+      - /platform/config.py:/var/www/sample-platform/config.py
+    env_file:
+      - /platform/db.env
+    depends_on:
+      - platform_db_mariadb
+
+  platform_nginx:
+    image: nginx:alpine
+    container_name: platform_nginx
+    restart: always
+    volumes:
+      - sample_platform:/var/www/sample-platform:ro
+      - repository:/repository:ro
+      - /platform/nginx:/etc/nginx/templates
+    environment:
+      - VIRTUAL_HOST=newplatform.ccextractor.org
+      - LETSENCRYPT_HOST=newplatform.ccextractor.org
+    depends_on:
+      - platform_python
+    networks:
+      - proxy-tier
+      - default
 
 volumes:
   certs:
@@ -58,3 +96,12 @@ volumes:
   dhparam:
   db:
   sample_platform:
+  repository:
+
+networks:
+  proxy-tier:
+  datagrip:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
